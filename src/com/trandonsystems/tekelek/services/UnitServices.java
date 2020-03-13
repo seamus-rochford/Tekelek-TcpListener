@@ -68,10 +68,10 @@ public class UnitServices {
 	        boolean finished = false;
 	        while (!finished) {
 	            // Process the data 
-//	            int rssi = (int)data[index] & 15;
-//	            int src = ((int)data[index + 2] >> 2) & 15;
-	            reading.temperature = ((int)data[index + 1] >> 1) - 30;
-	            reading.binLevel = (((int)data[index + 2] & 3) << 8) + (int)data[index + 3];
+	            reading.rssi = (int)data[index] & 15;
+	            reading.temperature = ((int)(data[index + 1] & 0xff) >> 1) - 30;
+	            reading.src = ((int)data[index + 2] >> 2) & 15;
+	            reading.binLevel = (((int)data[index + 2] & 3) << 8) + (int)(data[index + 3] & 0xff);
 	
 	    		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 	    			                     						.withLocale(Locale.UK)
@@ -79,7 +79,7 @@ public class UnitServices {
 	    		String readingTime_HHMM = formatter.format( readingTime );		
 	            log.debug("RTC: " + readingTime_HHMM + "   cms: " + reading.binLevel);
 	
-	            // Put default values into all other fields
+	            // Put default values into all other fields - NOT used by Tekelek units
 				reading.binLevelBC = 0;
 				reading.noFlapOpening = 0;
 				reading.batteryVoltage = 0;
@@ -95,6 +95,8 @@ public class UnitServices {
 				reading.flapStuckOpen = false;
 				
 				reading.nbIoTSignalStrength = 0;
+				reading.snr = 0;
+				reading.ber = 0;
 
 				reading.readingDateTime = readingTime;
 	            log.info(reading);
@@ -109,7 +111,7 @@ public class UnitServices {
 	            } else {
 	                index += 4;
 	
-	                readingTime = readingTime.minus(sampleInterval * -1, ChronoUnit.MINUTES);;
+	                readingTime = readingTime.minus(sampleInterval, ChronoUnit.MINUTES);;
 	
 	                if (data[index] + data[index+1] + data[index+2] + data[index+3] == 0) {
 	                    finished = true;

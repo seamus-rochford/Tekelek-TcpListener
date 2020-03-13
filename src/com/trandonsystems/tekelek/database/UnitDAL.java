@@ -61,7 +61,7 @@ public class UnitDAL {
 			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
 		}
 
-		String spCall = "{ call SaveReading(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
+		String spCall = "{ call SaveReading(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 		log.debug("SP Call: " + spCall);
 
 		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
@@ -86,10 +86,14 @@ public class UnitDAL {
 			spStmt.setInt(17, reading.serviceDoorOpen ? 1 : 0);
 			spStmt.setInt(18, reading.flapStuckOpen ? 1 : 0);
 			spStmt.setInt(19, reading.nbIoTSignalStrength);
+			spStmt.setInt(20, reading.rssi);
+			spStmt.setInt(21, reading.src);
+			spStmt.setInt(22, reading.snr);
+			spStmt.setInt(23, reading.ber);
 
 			// Convert java.time.Instant to java.sql.timestamp
 			Timestamp ts = Timestamp.from(reading.readingDateTime);
-		    spStmt.setTimestamp(20, ts);
+		    spStmt.setTimestamp(24, ts);
 		    
 		    spStmt.executeQuery();
 
@@ -101,7 +105,6 @@ public class UnitDAL {
 		return;
 	}
 	
-
 	public static UnitMessage getUnitMsg(String serialNo) throws SQLException {
 		log.info("UnitDAL.getUnit(conn, serialNo)");
 		try {
