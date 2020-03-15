@@ -42,12 +42,8 @@ public class ListenerThread extends Thread {
     		String inStr = Arrays.toString(result);
     		log.debug("Recieved from client (numbers): " + inStr); 
     		
-    		UnitMessage unitMsg = new UnitMessage();
-    		if (result.length == 140) {
-    			unitMsg = unitServices.saveUnitReading(result);
-    		} else {
-    			throw new Exception("Tekelek messages must be 140 bytes");
-    		}
+    		// do NOT check msg length until after raw-data is saved
+    		UnitMessage unitMsg = unitServices.saveUnitReading(result);
     		
     		// send message back to client - if there is one
     		if (unitMsg.replyMessage) {
@@ -63,13 +59,16 @@ public class ListenerThread extends Thread {
 
         } catch (IOException exIO) {
             log.error("Server exception: " + exIO.getMessage());
-            exIO.printStackTrace();
+    		exIO.printStackTrace();
+//            log.error("Stack Trace: " + exIO.getStackTrace().toString());
     	} catch (SQLException exSQL) {
     		log.error("Server exception: " + exSQL.getMessage());
     		exSQL.printStackTrace();
+//            log.error("Stack Trace: " + exSQL.getStackTrace().toString());
         } catch (Exception ex) {
             log.error("Server exception: " + ex.getMessage());
             ex.printStackTrace();
+//            log.error("Stack Trace: " + ex.getStackTrace().toString());
     	} finally {
             log.info("Communication ended");            
     	}

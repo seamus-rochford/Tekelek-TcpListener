@@ -138,8 +138,12 @@ public class UnitServices {
 			// Save the raw data to the DB
 			long rawDataId = UnitDAL.saveRawData(data);
 			
-			// Tekelek sensor
-			unitMsg = processTekelekData(rawDataId, data);
+			// Tekelek sensor must be 140 bytes
+    		if (data.length == 140) {
+				unitMsg = processTekelekData(rawDataId, data);
+    		} else {
+    			throw new Exception("Tekelek messages must be 140 bytes");
+    		}
 						
 			return unitMsg;
 		}
