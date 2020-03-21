@@ -33,21 +33,23 @@ public class ListenerThread extends Thread {
     		byte buffer[] = new byte[1024];
     		baos.write(buffer, 0, input.read(buffer));
     		
-    		byte result[] = baos.toByteArray();
+    		byte data[] = baos.toByteArray();
     		
 //    		for (int i = 0; i < result.length; i++) {
 //    			log.debug(i + ":" + (result[i] & 0xFF));
 //    		}
-    		log.debug("Recieved from client (bytes): " + result + " Byte Size: " + result.length); 
-    		String inStr = Arrays.toString(result);
+    		log.debug("Recieved from client (bytes): " + data + " Byte Size: " + data.length); 
+    		String inStr = Arrays.toString(data);
     		log.debug("Recieved from client (numbers): " + inStr); 
     		
     		// do NOT check msg length until after raw-data is saved
-    		UnitMessage unitMsg = unitServices.saveUnitReading(result);
+    		UnitMessage unitMsg = unitServices.saveUnitReading(data);
     		
     		// send message back to client - if there is one
     		if (unitMsg.replyMessage) {
+    			// output.write sends the message
     			output.write(unitMsg.message);
+    			// Mart the message as sent so it will NOT be sent again
     			unitServices.markMessageAsSent(unitMsg);
     			log.debug("Message set to unitId: " + unitMsg.unitId + " messageId: " + unitMsg.messageId + "   Message (bytes): " + unitMsg.message + "    Message(numbers): " + Arrays.toString(unitMsg.message));
     		}
