@@ -34,7 +34,7 @@ public class UnitServices {
         // serialNo is IMEI - each of the half bytes in bytes 7 to 14 have the digits of the IMEI - converting each byte to it HEX will give each of the 2 digits in that byte
         reading.serialNo = Hex.ByteToHex(data[7]) + Hex.ByteToHex(data[8]) + Hex.ByteToHex(data[9]) + Hex.ByteToHex(data[10]) 
                         + Hex.ByteToHex(data[11]) + Hex.ByteToHex(data[12]) + Hex.ByteToHex(data[13]) + Hex.ByteToHex(data[14]);
-        Unit unit = UnitDAL.getUnitBySerialNo(reading.serialNo);
+        Unit unit = UnitDAL.getUnitBySerialNo(1, reading.serialNo);
 		
         
         reading.msgType = (int)data[15];

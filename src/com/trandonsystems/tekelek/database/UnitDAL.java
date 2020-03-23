@@ -162,7 +162,7 @@ public class UnitDAL {
 		}
 	}
 
-	public static Unit getUnitBySerialNo(String serialNo) {
+	public static Unit getUnitBySerialNo(int userFilterId, String serialNo) {
 		log.info("UnitDAL.get(id)");
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
@@ -178,7 +178,8 @@ public class UnitDAL {
 		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
-			spStmt.setString(1, serialNo);
+			spStmt.setInt(1, userFilterId);
+			spStmt.setString(2, serialNo);
 			ResultSet rs = spStmt.executeQuery();
 
 			unit.serialNo = serialNo;
