@@ -24,7 +24,7 @@ public class UnitReading {
 	//flags
 	public boolean batteryUVLO;
 	public boolean binEmptiedLastPeriod;
-	public boolean overUnderTempLO;
+	public boolean batteryOverTempLO;
 	public boolean binLocked;
 	public boolean binFull;
 	public boolean binTilted;

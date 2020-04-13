@@ -54,7 +54,7 @@ public class UnitDAL {
 
 	public static void saveReading(long rawDataId, long unitId, UnitReading reading) throws SQLException {
 
-		log.info("UnitDAL.saveReading(rawDataId, reading)");
+		log.info("UnitDAL.saveReadingTekelek(rawDataId, reading)");
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
 		} catch (Exception ex) {
@@ -79,7 +79,7 @@ public class UnitDAL {
 			spStmt.setInt(10, reading.noCompactions);
 			spStmt.setInt(11, reading.batteryUVLO ? 1 : 0);
 			spStmt.setInt(12, reading.binEmptiedLastPeriod ? 1 : 0);
-			spStmt.setInt(13, reading.overUnderTempLO ? 1 : 0);
+			spStmt.setInt(13, reading.batteryOverTempLO ? 1 : 0);
 			spStmt.setInt(14, reading.binLocked ? 1 : 0);
 			spStmt.setInt(15, reading.binFull ? 1 : 0);
 			spStmt.setInt(16, reading.binTilted ? 1 : 0);
@@ -170,7 +170,7 @@ public class UnitDAL {
 			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
 		}
 
-		String spCall = "{ call GetUnitBySerialNo(?) }";
+		String spCall = "{ call GetUnitBySerialNo(?, ?) }";
 		log.info("SP Call: " + spCall);
 		
 		Unit unit = new Unit();

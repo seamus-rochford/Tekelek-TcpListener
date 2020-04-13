@@ -87,7 +87,7 @@ public class UnitServices {
 				
 				reading.batteryUVLO = false;
 				reading.binEmptiedLastPeriod = false;
-				reading.overUnderTempLO = false;
+				reading.batteryOverTempLO = false;
 				reading.binLocked = false;
 				reading.binFull = false;
 				reading.binTilted = false;

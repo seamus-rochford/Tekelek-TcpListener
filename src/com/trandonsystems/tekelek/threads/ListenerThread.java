@@ -2,6 +2,7 @@ package com.trandonsystems.tekelek.threads;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Arrays;
 import org.apache.log4j.Logger;
@@ -52,6 +53,10 @@ public class ListenerThread extends Thread {
     			// Mart the message as sent so it will NOT be sent again
     			unitServices.markMessageAsSent(unitMsg);
     			log.debug("Message set to unitId: " + unitMsg.unitId + " messageId: " + unitMsg.messageId + "   Message (bytes): " + unitMsg.message + "    Message(numbers): " + Arrays.toString(unitMsg.message));
+    		} else {
+    			// Send the default message
+    			String defaultMessage = "TEK811,R3=ACTIVE,R1=80";
+    			output.write(defaultMessage.getBytes(StandardCharsets.UTF_8));
     		}
 	    	
     		// Close the connection and the streams
