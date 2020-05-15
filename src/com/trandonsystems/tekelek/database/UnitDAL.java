@@ -17,7 +17,7 @@ import com.trandonsystems.tekelek.model.UnitReading;
 
 public class UnitDAL {
 
-	static final String SOURCE = "NB IoT - Tekelek Sensor";
+	static final String SOURCE = "NB-IoT Tek";
 	
 	static Logger log = Logger.getLogger(UnitDAL.class);
 	static Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -64,7 +64,7 @@ public class UnitDAL {
 			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
 		}
 
-		String spCall = "{ call SaveReading(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
+		String spCall = "{ call SaveReadingTekelek(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 		log.debug("SP Call: " + spCall);
 
 		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
@@ -97,6 +97,8 @@ public class UnitDAL {
 			// Convert java.time.Instant to java.sql.timestamp
 			Timestamp ts = Timestamp.from(reading.readingDateTime);
 		    spStmt.setTimestamp(24, ts);
+
+			spStmt.setString(25, SOURCE);
 		    
 		    spStmt.executeQuery();
 
