@@ -30,7 +30,7 @@ public class License {
 //			log.info("******************************************************************************************************");
 //			log.info("******************************************************************************************************");
 
-    		// Email me notification 
+    		// Email me notification
     		try {
     			EmailDAL.sendEmail(0, "srochford@trandonsystems.com", "Tekelek Listener", false, "PelBin - Tekelek Listener has stopped receiving data");
     		} catch(Exception ex) {

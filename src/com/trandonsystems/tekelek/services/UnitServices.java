@@ -48,8 +48,7 @@ public class UnitServices {
 
             sampleInterval = 15 * noIntervals;
         }
- 
-      
+        
         log.debug("Product Type:" + productType);
         log.debug("IMEI:" + reading.serialNo);
         log.debug("Message Type:" + reading.msgType);
@@ -59,7 +58,7 @@ public class UnitServices {
         if (reading.msgType != 4 && reading.msgType != 8) {
             log.info("Message Type: " + reading.msgType + " >>> Not supported");
         } else {
-	
+        	
 	        Instant readingTime = Instant.now();
 	
 	        int index = 26;
