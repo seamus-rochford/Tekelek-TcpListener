@@ -6,13 +6,15 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.trandonsystems.tekelek.model.Unit;
-import com.trandonsystems.tekelek.model.UnitMessage;
+import com.trandonsystems.tekelek.model.TekelekMessage;
 import com.trandonsystems.tekelek.model.UnitReading;
 
 public class UnitDAL {
@@ -110,7 +112,8 @@ public class UnitDAL {
 		return;
 	}
 	
-	public static UnitMessage getUnitMsg(String serialNo) throws SQLException {
+	public static List<TekelekMessage> getTekelekMsgs(String serialNo) throws SQLException {
+	// This gets a Tekelek Message
 		log.info("UnitDAL.getUnit(conn, serialNo)");
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
@@ -119,46 +122,48 @@ public class UnitDAL {
 		}
  
 		log.debug("SerialNo: " + serialNo);
-		String spCall = "{ call GetUnitMessage(?) }";
+		String spCall = "{ call GetTekelekMessages(?) }";
 		log.debug("SP Call: " + spCall);
 
-		UnitMessage unitMsg = new UnitMessage();
+		List<TekelekMessage> unitMsgs = new ArrayList<TekelekMessage>();
 		
 		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 			spStmt.setString(1, serialNo);
 			ResultSet rs = spStmt.executeQuery();
 
-			if (rs.next()) {
+			while (rs.next()) {
+				TekelekMessage unitMsg = new TekelekMessage();
+				unitMsg.id = rs.getInt("id");
 				unitMsg.unitId = rs.getInt("unitId");
-				unitMsg.replyMessage = rs.getBoolean("replyMessage");
-				unitMsg.messageId = rs.getInt("messageId");
-				unitMsg.message = rs.getBytes("message");
+				unitMsg.message = rs.getString("message");
+				
+				unitMsgs.add(unitMsg);
 			}
 		} catch (SQLException ex) {
 			log.error(ex.getMessage());
 			throw ex;
 		}
 
-		return unitMsg;
+		return unitMsgs;
 	}
 	
-	public static void markMessageAsSent(UnitMessage unitMsg) throws SQLException{
+	public static void markTekelekMessageAsSent(TekelekMessage unitMsg) throws SQLException{
 
-		log.info("UnitDAL.markMessageAsSent(unitMsg)");
+		log.info("UnitDAL.markTekelekMessageAsSent(unitMsg)");
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
 		} catch (Exception ex) {
 			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
 		}
 
-		String spCall = "{ call MarkMessageAsSent(?) }";
+		String spCall = "{ call markTekelekMessageAsSent(?) }";
 		log.info("SP Call: " + spCall);
 
 		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
-			spStmt.setInt(1, unitMsg.messageId);
+			spStmt.setInt(1, unitMsg.id);
 			spStmt.executeUpdate();
 
 		} catch (SQLException ex) {

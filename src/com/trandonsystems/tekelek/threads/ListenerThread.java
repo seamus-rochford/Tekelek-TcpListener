@@ -5,9 +5,11 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
-import com.trandonsystems.tekelek.model.UnitMessage;
+import com.trandonsystems.tekelek.model.TekelekMessage;
 import com.trandonsystems.tekelek.services.UnitServices;
 
 public class ListenerThread extends Thread {
@@ -20,6 +22,20 @@ public class ListenerThread extends Thread {
         this.socket = socket;
     }
  
+    private String buildMessage(List<TekelekMessage> tekelekMsgs) {
+    	
+    	String msg = "3&x!yz";
+    	
+    	for (int i = 0; i < tekelekMsgs.size(); i++) {
+    		msg += ',' + tekelekMsgs.get(i).message;
+    	}
+    	
+    	// Set Unit to "ACTIVE" state and then Shut down and sleep
+    	msg += ",R3=ACTIVE,R1=80";
+
+    	return msg;
+    }
+    
     public void run() {
         try {
         	log.debug("Start communication - Message received - processing");
@@ -44,21 +60,33 @@ public class ListenerThread extends Thread {
     		log.debug("Recieved from client (numbers): " + inStr); 
     		
     		// do NOT check msg length until after raw-data is saved
-    		UnitMessage unitMsg = unitServices.saveUnitReading(data);
+    		List<TekelekMessage> unitMsgs = unitServices.saveUnitReading(data);
+
+    		// build message to send back to client - if there is one
+    		String replyMessage = buildMessage(unitMsgs);
+    		log.debug("Msg to Sensor: " + replyMessage);
     		
+    		// output.write sends the message
+			output.write(replyMessage.getBytes(StandardCharsets.UTF_8));
+			
+			// MArk messages as sent
+			for (int i = 0; i < unitMsgs.size(); i++) {
+				unitServices.markMessageAsSent(unitMsgs.get(i));
+			}
+
     		// send message back to client - if there is one
-    		if (unitMsg.replyMessage) {
-    			// output.write sends the message
-    			output.write(unitMsg.message);
-    			// Mart the message as sent so it will NOT be sent again
-    			unitServices.markMessageAsSent(unitMsg);
-    			log.debug("Message set to unitId: " + unitMsg.unitId + " messageId: " + unitMsg.messageId + "   Message (bytes): " + unitMsg.message + "    Message(numbers): " + Arrays.toString(unitMsg.message));
-    		} else {
-    			// Send the default message
-    			String defaultMessage = "TEK811,R3=ACTIVE,R1=80";
-    			output.write(defaultMessage.getBytes(StandardCharsets.UTF_8));
-    		}
-	    	
+//    		if (unitMsg.replyMessage) {
+//    			// output.write sends the message
+//    			output.write(unitMsg.message);
+//    			// Mart the message as sent so it will NOT be sent again
+//    			unitServices.markMessageAsSent(unitMsg);
+//    			log.debug("Message set to unitId: " + unitMsg.unitId + " messageId: " + unitMsg.messageId + "   Message (bytes): " + unitMsg.message + "    Message(numbers): " + Arrays.toString(unitMsg.message));
+//    		} else {
+//    			// Send the default message
+//    			String defaultMessage = "TEK811,R3=ACTIVE,R1=80";
+//    			output.write(defaultMessage.getBytes(StandardCharsets.UTF_8));
+//    		}
+//	    	
     		// Close the connection and the streams
             socket.close();
             input.close();

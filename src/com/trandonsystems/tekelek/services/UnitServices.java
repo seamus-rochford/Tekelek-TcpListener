@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import org.apache.log4j.Logger;
@@ -13,7 +15,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.trandonsystems.tekelek.database.UnitDAL;
 import com.trandonsystems.tekelek.model.Unit;
-import com.trandonsystems.tekelek.model.UnitMessage;
+import com.trandonsystems.tekelek.model.TekelekMessage;
 import com.trandonsystems.tekelek.model.UnitReading;
 
 public class UnitServices {
@@ -23,10 +25,10 @@ public class UnitServices {
 
 	// This considerabily different from BriteBin reading processing
 	// Tekelek send multiple messages in a single tcp communication
-	private UnitMessage processTekelekData(long rawDataId, byte[] data) throws Exception {
+	private List<TekelekMessage> processTekelekData(long rawDataId, byte[] data) throws Exception {
 		
 		log.info("processTekelekData - start");
-		UnitMessage unitMsg = new UnitMessage();
+		List<TekelekMessage> unitMsgs = new ArrayList<TekelekMessage>();
 		UnitReading reading = new UnitReading();
 
 		int productType = data[0] & 0xff;
@@ -117,33 +119,33 @@ public class UnitServices {
 	            }
 	        }
 	        
-			unitMsg = UnitDAL.getUnitMsg(reading.serialNo);
-			log.debug("unitMsg: " + gson.toJson(unitMsg));		
+			unitMsgs = UnitDAL.getTekelekMsgs(reading.serialNo);
+			log.debug("unitMsgs: " + gson.toJson(unitMsgs));		
 	        
         }
 		log.info("processTekelekData - end");
 
-		return unitMsg;
+		return unitMsgs;
 	}
-	
 
-	public UnitMessage saveUnitReading(byte[] data) throws Exception {
+	
+	public List<TekelekMessage> saveUnitReading(byte[] data) throws Exception {
 		try {
 			log.info("UnitServices.saveUnitReading");
 			
-			UnitMessage unitMsg = new UnitMessage();
+			List<TekelekMessage> unitMsgs = new ArrayList<TekelekMessage>();
 			
 			// Save the raw data to the DB
 			long rawDataId = UnitDAL.saveRawData(data);
 			
 			// Tekelek sensor must be 140 bytes
     		if (data.length == 140) {
-				unitMsg = processTekelekData(rawDataId, data);
+				unitMsgs = processTekelekData(rawDataId, data);
     		} else {
     			throw new Exception("Tekelek messages must be 140 bytes");
     		}
 						
-			return unitMsg;
+			return unitMsgs;
 		}
 		catch(SQLException ex) {
 			log.error(ex.getMessage());
@@ -151,7 +153,7 @@ public class UnitServices {
 		}
 	}
     
-	public void markMessageAsSent(UnitMessage unitMsg) throws SQLException {
-		UnitDAL.markMessageAsSent(unitMsg);
+	public void markMessageAsSent(TekelekMessage unitMsg) throws SQLException {
+		UnitDAL.markTekelekMessageAsSent(unitMsg);
 	}
 }

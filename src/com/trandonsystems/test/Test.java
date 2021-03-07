@@ -1,6 +1,8 @@
-package com.trandonsystesm.test;
+package com.trandonsystems.test;
 
-import com.trandonsystems.tekelek.model.UnitMessage;
+import java.util.List;
+
+import com.trandonsystems.tekelek.model.TekelekMessage;
 import com.trandonsystems.tekelek.services.Hex;
 import com.trandonsystems.tekelek.services.UnitServices;
 
@@ -16,8 +18,8 @@ public class Test {
 		UnitServices unitServices = new UnitServices();
 		
 		try {
-			UnitMessage unitMsg = unitServices.saveUnitReading(data);
-			System.out.println(unitMsg);
+			List<TekelekMessage> unitMsgs = unitServices.saveUnitReading(data);
+			System.out.println(unitMsgs);
 		}
 		catch (Exception e) {
 			System.out.println("ERROR: " + e.getMessage());
@@ -26,7 +28,6 @@ public class Test {
 	}
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 
 		TestSaveUnitReading();
 	}
