@@ -38,22 +38,55 @@ public class UnitServices {
                         + Hex.ByteToHex(data[11]) + Hex.ByteToHex(data[12]) + Hex.ByteToHex(data[13]) + Hex.ByteToHex(data[14]);
         Unit unit = UnitDAL.getUnitBySerialNo(1, reading.serialNo);
 		        
-        reading.msgType = (int)data[15];
+        log.debug("MsgType: " + reading.msgType);
 
         int sampleInterval = 0;
         int loggerSpeed = (int)data[23];
 
         if (reading.msgType == 8) {
+        	// MsgType = 8 (This is an alarm or a manual send (using magnet))
             sampleInterval = ((loggerSpeed & 128) == 128) ? 15 : 1;
         } else if (reading.msgType == 4) {
+        	// This is a regular server communication
             int noIntervals = loggerSpeed & 127;  // lower 7 bits define the number of intervals between logging samples
 
             sampleInterval = 15 * noIntervals;
         }
-        
-        log.debug("Product Type:" + productType);
-        log.debug("IMEI:" + reading.serialNo);
-        log.debug("Message Type:" + reading.msgType);
+
+        // These will only be used for msgType = 8, but set once here for the message received
+    	reading.contactReason = (int)data[3];   // byte 3 is contact reason
+    	log.debug("Contact Reason: " + reading.contactReason);
+
+    	reading.alarmStatus = (int)data[4];
+    	log.debug("AlarmStats: " + reading.alarmStatus);
+
+    	boolean manualReading = ((reading.contactReason & 8) == 8);  	// if bit 4 = 1 then it is a manual triggered reading
+    	boolean alarmReading = ((reading.contactReason & 2) == 2);		// if bit 2 = 1 then it is an alarm reading
+
+    	log.info("Manual Reading: " + manualReading);
+    	log.info("Alarm Reading: " + alarmReading);
+    	
+    	if (alarmReading) {
+    		// Check if static alarms fired
+    		boolean s4Alarm = ((reading.alarmStatus & 1) == 1);
+    		boolean s5Alarm = ((reading.alarmStatus & 2) == 2);
+    		boolean s6Alarm = ((reading.alarmStatus & 4) == 4);
+    		
+    		// check if dynamic alarms fired
+    		boolean s7Alarm = ((reading.contactReason & 64) == 64);
+    		boolean s8Alarm = ((reading.contactReason & 128) == 128);
+    		
+    		if (s4Alarm) log.debug("S4 Alarm triggered");
+    		if (s5Alarm) log.debug("S5 Alarm triggered");
+    		if (s6Alarm) log.debug("S6 Alarm triggered");
+    		if (s7Alarm) log.debug("S7 Alarm triggered");
+    		if (s8Alarm) log.debug("S8 Alarm triggered");
+    	}
+
+    	
+        log.debug("Product Type: " + productType);
+        log.debug("IMEI: " + reading.serialNo);
+        log.debug("Message Type: " + reading.msgType);
         log.debug("Logger Interval: " + sampleInterval);
 
         // Only interested in message type 4 & 8 - ignore all other message types
@@ -77,32 +110,33 @@ public class UnitServices {
 	    			                     						.withLocale(Locale.UK)
 	    			                     						.withZone(ZoneId.systemDefault());
 	    		String readingTime_HHMM = formatter.format( readingTime );		
-	            log.debug("RTC: " + readingTime_HHMM + "   cms: " + reading.binLevel);
-	
-	            // Put default values into all other fields - NOT used by Tekelek units
-				reading.binLevelBC = 0;
-				reading.noFlapOpening = 0;
-				reading.batteryVoltage = 0;
-				reading.noCompactions = 0;
-				
-				reading.batteryUVLO = false;
-				reading.binEmptiedLastPeriod = false;
-				reading.batteryOverTempLO = false;
-				reading.binLocked = false;
-				reading.binFull = false;
-				reading.binTilted = false;
-				reading.serviceDoorOpen = false;
-				reading.flapStuckOpen = false;
-				
-				reading.nbIoTSignalStrength = 0;
-				reading.snr = 0;
-				reading.ber = 0;
+	            log.debug("RTC: " + readingTime_HHMM + "   cms: " + reading.binLevel + "   src: " + reading.src + "   temp: " + reading.temperature + "   rssi: " + reading.rssi);
 
 				reading.readingDateTime = readingTime;
 	            log.info(reading);
 				
-	            // Save data to database
-				UnitDAL.saveReading(rawDataId, unit.id, reading);
+
+	            if (reading.msgType == 8) {
+	            	// Manual reading or an alarm
+	            	if (manualReading) {
+	            		if (reading.src >= 6) {
+	            			// Good reading - save to database
+	        				UnitDAL.saveReading(rawDataId, unit.id, reading);
+	        				// Only save one valid manual reading - (Note, if no reading of src = 9 or 10 then no manual reading will be saved)
+	        				finished = true;
+	            		}
+	            	} else if (alarmReading) {
+	            		// only save one reading to the database
+	        			UnitDAL.saveReading(rawDataId, unit.id, reading);
+	        			finished = true;
+	            	}
+	            } else {
+	            	// Regular interval reading communication - Only save readings where src >= 0
+            		if (reading.src >= 0) {
+        	            // Save data to database
+        				UnitDAL.saveReading(rawDataId, unit.id, reading);
+            		}
+	            }
 	
 	            readingsCount++;
 	
@@ -111,7 +145,10 @@ public class UnitServices {
 	            } else {
 	                index += 4;
 	
-	                readingTime = readingTime.minus(sampleInterval, ChronoUnit.MINUTES);;
+	                // Do NOT increment readingDateTime for a manual Reading - we will only save the first reading that has src = 9 or 10
+	                if (reading.msgType != 8 || !manualReading) {
+	                	readingTime = readingTime.minus(sampleInterval, ChronoUnit.MINUTES);
+	                }
 	
 	                if (data[index] + data[index+1] + data[index+2] + data[index+3] == 0) {
 	                    finished = true;

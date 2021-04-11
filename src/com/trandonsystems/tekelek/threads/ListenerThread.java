@@ -4,12 +4,12 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import com.trandonsystems.tekelek.model.TekelekMessage;
+import com.trandonsystems.tekelek.services.Hex;
 import com.trandonsystems.tekelek.services.UnitServices;
 
 public class ListenerThread extends Thread {
@@ -24,14 +24,23 @@ public class ListenerThread extends Thread {
  
     private String buildMessage(List<TekelekMessage> tekelekMsgs) {
     	
+    	// Start the message with password
     	String msg = "3&x!yz";
     	
     	for (int i = 0; i < tekelekMsgs.size(); i++) {
     		msg += ',' + tekelekMsgs.get(i).message;
     	}
     	
-    	// Set Unit to "ACTIVE" state and then Shut down and sleep
-    	msg += ",R3=ACTIVE,R1=80";
+    	// Set Unit to "ACTIVE" state 
+    	msg += ",R3=ACTIVE";
+    	
+    	// Check if "R1" msg included already - if yes do nothing otherwise add ",R1=80"
+    	int index = msg.indexOf(",R1=");
+    	
+    	if (index < 0) {
+    		// Tell unit Shut down and sleep
+    		msg += ",R1=80";
+    	}
 
     	return msg;
     }
@@ -51,13 +60,7 @@ public class ListenerThread extends Thread {
     		baos.write(buffer, 0, input.read(buffer));
     		
     		byte data[] = baos.toByteArray();
-    		
-//    		for (int i = 0; i < result.length; i++) {
-//    			log.debug(i + ":" + (result[i] & 0xFF));
-//    		}
-    		log.debug("Recieved from client (bytes): " + data + " Byte Size: " + data.length); 
-    		String inStr = Arrays.toString(data);
-    		log.debug("Recieved from client (numbers): " + inStr); 
+    		log.debug("Recieved from client (Hex): " + Hex.ByteArrayToHex(data) + " Byte Size: " + data.length); 
     		
     		// do NOT check msg length until after raw-data is saved
     		List<TekelekMessage> unitMsgs = unitServices.saveUnitReading(data);
@@ -65,39 +68,29 @@ public class ListenerThread extends Thread {
     		// build message to send back to client - if there is one
     		String replyMessage = buildMessage(unitMsgs);
     		log.debug("Msg to Sensor: " + replyMessage);
+//    		log.debug("Msg to Sensor (Hex): " + Hex.ByteArrayToHex(replyMessage.getBytes(StandardCharsets.UTF_8)));
     		
     		// output.write sends the message
 			output.write(replyMessage.getBytes(StandardCharsets.UTF_8));
 			
-			// MArk messages as sent
+			// Mark messages as sent
 			for (int i = 0; i < unitMsgs.size(); i++) {
 				unitServices.markMessageAsSent(unitMsgs.get(i));
 			}
 
-    		// send message back to client - if there is one
-//    		if (unitMsg.replyMessage) {
-//    			// output.write sends the message
-//    			output.write(unitMsg.message);
-//    			// Mart the message as sent so it will NOT be sent again
-//    			unitServices.markMessageAsSent(unitMsg);
-//    			log.debug("Message set to unitId: " + unitMsg.unitId + " messageId: " + unitMsg.messageId + "   Message (bytes): " + unitMsg.message + "    Message(numbers): " + Arrays.toString(unitMsg.message));
-//    		} else {
-//    			// Send the default message
-//    			String defaultMessage = "TEK811,R3=ACTIVE,R1=80";
-//    			output.write(defaultMessage.getBytes(StandardCharsets.UTF_8));
-//    		}
-//	    	
+			log.debug("Message sent to unit");
+			
     		// Close the connection and the streams
             socket.close();
             input.close();
             output.close();
 
         } catch (IOException exIO) {
-            log.error("Server exception: " + exIO.getMessage());
+            log.error("Server IO exception: " + exIO.getMessage());
     		exIO.printStackTrace();
 //            log.error("Stack Trace: " + exIO.getStackTrace().toString());
     	} catch (SQLException exSQL) {
-    		log.error("Server exception: " + exSQL.getMessage());
+    		log.error("Server SQL exception: " + exSQL.getMessage());
     		exSQL.printStackTrace();
 //            log.error("Stack Trace: " + exSQL.getStackTrace().toString());
         } catch (Exception ex) {

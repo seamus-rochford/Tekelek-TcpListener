@@ -66,7 +66,7 @@ public class UnitDAL {
 			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
 		}
 
-		String spCall = "{ call SaveReadingTekelek(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
+		String spCall = "{ call SaveReadingTekelek_V2(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 		log.debug("SP Call: " + spCall);
 
 		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
@@ -76,31 +76,18 @@ public class UnitDAL {
 			spStmt.setString(2, reading.serialNo);
 			spStmt.setLong(3, rawDataId);
 			spStmt.setInt(4, reading.msgType);
-			spStmt.setInt(5, reading.binLevelBC);
-			spStmt.setInt(6, reading.binLevel);
-			spStmt.setInt(7, reading.noFlapOpening);
-			spStmt.setInt(8, reading.batteryVoltage);
-			spStmt.setInt(9, reading.temperature);
-			spStmt.setInt(10, reading.noCompactions);
-			spStmt.setInt(11, reading.batteryUVLO ? 1 : 0);
-			spStmt.setInt(12, reading.binEmptiedLastPeriod ? 1 : 0);
-			spStmt.setInt(13, reading.batteryOverTempLO ? 1 : 0);
-			spStmt.setInt(14, reading.binLocked ? 1 : 0);
-			spStmt.setInt(15, reading.binFull ? 1 : 0);
-			spStmt.setInt(16, reading.binTilted ? 1 : 0);
-			spStmt.setInt(17, reading.serviceDoorOpen ? 1 : 0);
-			spStmt.setInt(18, reading.flapStuckOpen ? 1 : 0);
-			spStmt.setInt(19, reading.nbIoTSignalStrength);
-			spStmt.setDouble(20, reading.rssi);
-			spStmt.setDouble(21, reading.src);
-			spStmt.setDouble(22, reading.snr);
-			spStmt.setInt(23, reading.ber);
+			spStmt.setInt(5, reading.binLevel);
+			spStmt.setInt(6, reading.temperature);
+			spStmt.setDouble(7, reading.rssi);
+			spStmt.setInt(8, reading.src);
+			spStmt.setInt(9, reading.contactReason);
+			spStmt.setInt(10, reading.alarmStatus);
 
 			// Convert java.time.Instant to java.sql.timestamp
 			Timestamp ts = Timestamp.from(reading.readingDateTime);
-		    spStmt.setTimestamp(24, ts);
+		    spStmt.setTimestamp(11, ts);
 
-			spStmt.setString(25, SOURCE);
+			spStmt.setString(12, SOURCE);
 		    
 		    spStmt.executeQuery();
 
@@ -173,7 +160,7 @@ public class UnitDAL {
 	}
 
 	public static Unit getUnitBySerialNo(int userFilterId, String serialNo) {
-		log.info("UnitDAL.get(id)");
+		log.info("UnitDAL.get(serialNo)");
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
 		} catch (Exception ex) {
