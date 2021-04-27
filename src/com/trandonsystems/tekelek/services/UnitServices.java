@@ -37,7 +37,8 @@ public class UnitServices {
         reading.serialNo = Hex.ByteToHex(data[7]) + Hex.ByteToHex(data[8]) + Hex.ByteToHex(data[9]) + Hex.ByteToHex(data[10]) 
                         + Hex.ByteToHex(data[11]) + Hex.ByteToHex(data[12]) + Hex.ByteToHex(data[13]) + Hex.ByteToHex(data[14]);
         Unit unit = UnitDAL.getUnitBySerialNo(1, reading.serialNo);
-		        
+		
+        reading.msgType = (int)data[15];
         log.debug("MsgType: " + reading.msgType);
 
         int sampleInterval = 0;

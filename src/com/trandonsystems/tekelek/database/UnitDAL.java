@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.trandonsystems.tekelek.model.Unit;
+import com.trandonsystems.tekelek.model.Alert;
 import com.trandonsystems.tekelek.model.TekelekMessage;
 import com.trandonsystems.tekelek.model.UnitReading;
 
@@ -57,6 +58,110 @@ public class UnitDAL {
 		return id;
 	}
 
+	public static List<Alert> getAlerts(int unitReadingId) throws SQLException {
+		log.info("UnitDAL.getAlerts(" + unitReadingId + ")");
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+		} catch (Exception ex) {
+			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
+		}
+ 
+		String spCall = "{ call GetAlertsByUnitReadingId(?) }";
+		log.debug("SP Call: " + spCall);
+
+		List<Alert> alerts = new ArrayList<Alert>();
+		
+		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+				CallableStatement spStmt = conn.prepareCall(spCall)) {
+			spStmt.setLong(1, unitReadingId);
+			ResultSet rs = spStmt.executeQuery();	
+			
+			while (rs.next()) {
+				Alert alert = new Alert();
+
+				alert.id = rs.getInt("id");
+				alert.alertType = rs.getInt("alertType");
+				alert.unitId = rs.getInt("unitId");
+				alert.status = rs.getInt("status");
+				alert.unitReadingId = unitReadingId;
+				alert.comments = rs.getString("comments");
+				alert.damageId = rs.getInt("damageId");
+				
+				// Convert database timestamp(UTC date) to local time instant
+				Timestamp alertDateTime = rs.getTimestamp("alertDateTime");
+				if (alertDateTime == null) {
+					alert.alertDateTime = null;
+				}
+				else {
+					java.time.Instant alertDateTimeInstant = alertDateTime.toInstant();
+					alert.alertDateTime = alertDateTimeInstant;
+				}	
+				
+				alerts.add(alert);
+			}
+			
+		} catch (SQLException ex) {
+			log.error(ex.getMessage());
+			throw ex;
+		}
+		
+		return alerts;
+	}
+	
+	public static void setBinEmptiedFlag(int unitReadingId) throws SQLException {
+		log.info("UnitDAL.setBinEmptiedFlag(unitReadingId)");
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+		} catch (Exception ex) {
+			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
+		}
+
+		String spCall = "{ call SetBinEmptiedFlag(?) }";
+		log.debug("SP Call: " + spCall);
+
+		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+				CallableStatement spStmt = conn.prepareCall(spCall)) {
+
+			spStmt.setInt(1, unitReadingId);
+
+		    spStmt.executeQuery();
+
+			
+		} catch (SQLException ex) {
+			log.error(ex.getMessage());
+			throw ex;
+		}
+		
+		return;	
+	}
+	
+	public static void setBinFullFlag(int unitReadingId) throws SQLException {
+		log.info("UnitDAL.setBinFullFlag(unitReadingId)");
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+		} catch (Exception ex) {
+			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
+		}
+
+		String spCall = "{ call SetBinFullFlag(?) }";
+		log.debug("SP Call: " + spCall);
+
+		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+				CallableStatement spStmt = conn.prepareCall(spCall)) {
+
+			spStmt.setInt(1, unitReadingId);
+
+		    spStmt.executeQuery();
+
+			
+		} catch (SQLException ex) {
+			log.error(ex.getMessage());
+			throw ex;
+		}
+		
+		return;	
+	}
+	
 	public static void saveReading(long rawDataId, long unitId, UnitReading reading) throws SQLException {
 
 		log.info("UnitDAL.saveReadingTekelek(rawDataId, reading)");
@@ -66,31 +171,54 @@ public class UnitDAL {
 			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
 		}
 
-		String spCall = "{ call SaveReadingTekelek_V2(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
+		String spCall = "{ call SaveReadingTekelek_V3(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 		log.debug("SP Call: " + spCall);
 
+		int id = 0;
+		
 		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
-			spStmt.setLong(1, unitId);
-			spStmt.setString(2, reading.serialNo);
-			spStmt.setLong(3, rawDataId);
-			spStmt.setInt(4, reading.msgType);
-			spStmt.setInt(5, reading.binLevel);
-			spStmt.setInt(6, reading.temperature);
-			spStmt.setDouble(7, reading.rssi);
-			spStmt.setInt(8, reading.src);
-			spStmt.setInt(9, reading.contactReason);
-			spStmt.setInt(10, reading.alarmStatus);
+			spStmt.setLong(1, id);
+			spStmt.setLong(2, unitId);
+			spStmt.setString(3, reading.serialNo);
+			spStmt.setLong(4, rawDataId);
+			spStmt.setInt(5, reading.msgType);
+			spStmt.setInt(6, reading.binLevel);
+			spStmt.setInt(7, reading.temperature);
+			spStmt.setDouble(8, reading.rssi);
+			spStmt.setInt(9, reading.src);
+			spStmt.setInt(10, reading.contactReason);
+			spStmt.setInt(11, reading.alarmStatus);
 
 			// Convert java.time.Instant to java.sql.timestamp
 			Timestamp ts = Timestamp.from(reading.readingDateTime);
-		    spStmt.setTimestamp(11, ts);
+		    spStmt.setTimestamp(12, ts);
 
-			spStmt.setString(12, SOURCE);
+			spStmt.setString(13, SOURCE);
 		    
 		    spStmt.executeQuery();
 
+			id = spStmt.getInt(1);
+			
+			// Check if alert generated for this reading
+			List<Alert> alerts = getAlerts(id);
+			for(int i = 0; i < alerts.size(); i++) {
+				Alert alert = alerts.get(i);
+				switch (alert.alertType) {
+				case 2:
+					setBinEmptiedFlag(alert.unitReadingId);
+					log.debug("Bin Emptied Flag set");
+					break;
+				case 10:
+					setBinFullFlag(alert.unitReadingId);
+					log.debug("Bin Full Flag set");
+					break;
+				default:
+					log.debug("Unset flag for unitReading: " + alert.unitReadingId + "  Flag(alertType): " + alert.alertType);
+				}
+			}
+			
 		} catch (SQLException ex) {
 			log.error("UnitDAL.saveReading: " + ex.getMessage());
 			throw ex;
