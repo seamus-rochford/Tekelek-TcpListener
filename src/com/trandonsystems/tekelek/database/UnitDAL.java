@@ -200,22 +200,25 @@ public class UnitDAL {
 		    spStmt.executeQuery();
 
 			id = spStmt.getInt(1);
-			
-			// Check if alert generated for this reading
-			List<Alert> alerts = getAlerts(id);
-			for(int i = 0; i < alerts.size(); i++) {
-				Alert alert = alerts.get(i);
-				switch (alert.alertType) {
-				case 2:
-					setBinEmptiedFlag(alert.unitReadingId);
-					log.debug("Bin Emptied Flag set");
-					break;
-				case 10:
-					setBinFullFlag(alert.unitReadingId);
-					log.debug("Bin Full Flag set");
-					break;
-				default:
-					log.debug("Unset flag for unitReading: " + alert.unitReadingId + "  Flag(alertType): " + alert.alertType);
+
+			// If it is and alram reading or a manual reading (magnet triggered)
+			if (reading.msgType == 8) {
+				// Check if alert generated for this reading
+				List<Alert> alerts = getAlerts(id);
+				for(int i = 0; i < alerts.size(); i++) {
+					Alert alert = alerts.get(i);
+					switch (alert.alertType) {
+					case 2:
+						setBinEmptiedFlag(alert.unitReadingId);
+						log.debug("Bin Emptied Flag set");
+						break;
+					case 10:
+						setBinFullFlag(alert.unitReadingId);
+						log.debug("Bin Full Flag set");
+						break;
+					default:
+						log.debug("Unset flag for unitReading: " + alert.unitReadingId + "  Flag(alertType): " + alert.alertType);
+					}
 				}
 			}
 			
