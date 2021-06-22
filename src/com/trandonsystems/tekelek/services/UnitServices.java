@@ -59,7 +59,7 @@ public class UnitServices {
     	log.debug("Contact Reason: " + reading.contactReason);
 
     	reading.alarmStatus = (int)data[4];
-    	log.debug("AlarmStats: " + reading.alarmStatus);
+    	log.debug("AlarmStatus: " + reading.alarmStatus);
 
     	boolean manualReading = ((reading.contactReason & 8) == 8);  	// if bit 4 = 1 then it is a manual triggered reading
     	boolean alarmReading = ((reading.contactReason & 2) == 2);		// if bit 2 = 1 then it is an alarm reading
@@ -113,9 +113,7 @@ public class UnitServices {
 	    		String readingTime_HHMM = formatter.format( readingTime );		
 	            log.debug("RTC: " + readingTime_HHMM + "   cms: " + reading.binLevel + "   src: " + reading.src + "   temp: " + reading.temperature + "   rssi: " + reading.rssi);
 
-				reading.readingDateTime = readingTime;
-	            log.info(reading);
-				
+				reading.readingDateTime = readingTime;				
 
 	            if (reading.msgType == 8) {
 	            	// Manual reading or an alarm
@@ -133,7 +131,7 @@ public class UnitServices {
 	            	}
 	            } else {
 	            	// Regular interval reading communication - Only save readings where src >= 0
-            		if (reading.src >= 0) {
+            		if (reading.src > 0) {
         	            // Save data to database
         				UnitDAL.saveReading(rawDataId, unit.id, reading);
             		}

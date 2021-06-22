@@ -2,7 +2,6 @@ package com.trandonsystems.tekelek.database;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -26,20 +25,13 @@ public class UnitDAL {
 	static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	public static long saveRawData(byte[] data) throws SQLException{
-
 		log.info("UnitDAL.saveRawData(data)");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-			throw new SQLException("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
 
 		String spCall = "{ call SaveRawReadings(?, ?) }";
 		log.info("SP Call: " + spCall);
 
 		long id = 0;
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
 			spStmt.setBytes(1, data);
@@ -60,18 +52,13 @@ public class UnitDAL {
 
 	public static List<Alert> getAlerts(int unitReadingId) throws SQLException {
 		log.info("UnitDAL.getAlerts(" + unitReadingId + ")");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
  
 		String spCall = "{ call GetAlertsByUnitReadingId(?) }";
 		log.debug("SP Call: " + spCall);
 
 		List<Alert> alerts = new ArrayList<Alert>();
 		
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 			spStmt.setLong(1, unitReadingId);
 			ResultSet rs = spStmt.executeQuery();	
@@ -110,16 +97,11 @@ public class UnitDAL {
 	
 	public static void setBinEmptiedFlag(int unitReadingId) throws SQLException {
 		log.info("UnitDAL.setBinEmptiedFlag(unitReadingId)");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
 
 		String spCall = "{ call SetBinEmptiedFlag(?) }";
 		log.debug("SP Call: " + spCall);
 
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
 			spStmt.setInt(1, unitReadingId);
@@ -137,16 +119,11 @@ public class UnitDAL {
 	
 	public static void setBinFullFlag(int unitReadingId) throws SQLException {
 		log.info("UnitDAL.setBinFullFlag(unitReadingId)");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
 
 		String spCall = "{ call SetBinFullFlag(?) }";
 		log.debug("SP Call: " + spCall);
 
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
 			spStmt.setInt(1, unitReadingId);
@@ -163,20 +140,14 @@ public class UnitDAL {
 	}
 	
 	public static void saveReading(long rawDataId, long unitId, UnitReading reading) throws SQLException {
-
-		log.info("UnitDAL.saveReadingTekelek(rawDataId, reading)");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
+		log.info("UnitDAL.saveReading(rawDataId, unitId, reading)");
 
 		String spCall = "{ call SaveReadingTekelek_V3(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 		log.debug("SP Call: " + spCall);
 
 		int id = 0;
 		
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
 			spStmt.setLong(1, id);
@@ -233,11 +204,6 @@ public class UnitDAL {
 	public static List<TekelekMessage> getTekelekMsgs(String serialNo) throws SQLException {
 	// This gets a Tekelek Message
 		log.info("UnitDAL.getUnit(conn, serialNo)");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
  
 		log.debug("SerialNo: " + serialNo);
 		String spCall = "{ call GetTekelekMessages(?) }";
@@ -245,7 +211,7 @@ public class UnitDAL {
 
 		List<TekelekMessage> unitMsgs = new ArrayList<TekelekMessage>();
 		
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 			spStmt.setString(1, serialNo);
 			ResultSet rs = spStmt.executeQuery();
@@ -267,18 +233,12 @@ public class UnitDAL {
 	}
 	
 	public static void markTekelekMessageAsSent(TekelekMessage unitMsg) throws SQLException{
-
 		log.info("UnitDAL.markTekelekMessageAsSent(unitMsg)");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
 
 		String spCall = "{ call markTekelekMessageAsSent(?) }";
 		log.info("SP Call: " + spCall);
 
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
 			spStmt.setInt(1, unitMsg.id);
@@ -292,18 +252,13 @@ public class UnitDAL {
 
 	public static Unit getUnitBySerialNo(int userFilterId, String serialNo) {
 		log.info("UnitDAL.get(serialNo)");
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-		} catch (Exception ex) {
-			log.error("ERROR: Can't create instance of driver" + ex.getMessage());
-		}
 
 		String spCall = "{ call GetUnitBySerialNo(?, ?) }";
 		log.info("SP Call: " + spCall);
 		
 		Unit unit = new Unit();
 		
-		try (Connection conn = DriverManager.getConnection(UtilDAL.connUrl, UtilDAL.username, UtilDAL.password);
+		try (Connection conn = UtilDAL.getConnection();
 				CallableStatement spStmt = conn.prepareCall(spCall)) {
 
 			spStmt.setInt(1, userFilterId);
